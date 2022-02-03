@@ -45,11 +45,11 @@ class Microscope(QWidget):
 
         self.setMinimumWidth(300)
         self.setMinimumHeight(300)
+        self.originalImage = QImage('image.jpg')
         self.image = QImage('image.jpg')
         self.clicks = []
-        self.center = QPoint(
-            self.image.size().width() / 2, self.image.size().height() / 2
-        )
+        self.center = QPoint(int(self.image.size().width() / 2),
+                             int(self.image.size().height() / 2))
         self.drawBoxes = False
         self.start = QPoint(0, 0)
         self.end = QPoint(1, 1)
@@ -72,14 +72,13 @@ class Microscope(QWidget):
     def updatedImageSize(self):
         if self.image.size() != self.minimumSize():
             self.setMinimumSize(self.image.size())
-            self.center = QPoint(
-                self.image.size().width() / 2, self.image.size().height() / 2
-            )
+            self.center = QPoint(int(self.image.size().width() / 2),
+                                 int(self.image.size().height() / 2))
 
     def acquire(self, start=True):
         self.downloader.setUrl(self.url)
         if start:
-            self.timer.start(1000.0 / self.fps)
+            self.timer.start(int(1000.0 / self.fps))
         else:
             self.timer.stop()
 
@@ -186,19 +185,24 @@ class Microscope(QWidget):
         if len(self.crop) == 4:
             self.image = self.image.copy(self.crop[0], self.crop[1], self.crop[2], self.crop[3])
         if len(self.scale) == 2:
-            if self.scale[0] > 0:
-                self.image = self.image.scaledToWidth(self.scale[0])
-            elif self.scale[1] > 0:
-                self.image = self.image.scaledToHeight(self.scale[1])
+            originalImage = image
+            self.resizeImage()
 
         self.updatedImageSize()
         self.update()
 
     def resizeImage(self):
         if len(self.crop) == 4:
-            self.image = self.image.copy(self.crop[0], self.crop[1], self.crop[2], self.crop[3])
-        if len(self.scale) == 2:
-            self.image = self.image.scaled(self.scale[0], self.scale[1])
+            self.image = self.originalImage.copy(self.crop[0], self.crop[1],
+                                                 self.crop[2], self.crop[3])
+        if len(self.scale) == 2 and self.scale[0] > 0 and self.scale[1] > 0:
+            width = self.originalImage.width()
+            height = self.originalImage.height()
+            if (height < self.scale[1]):
+                self.image = self.originalImage.scaledToWidth(self.scale[0])
+            else:
+                self.image = self.originalImage.scaledToHeight(self.scale[0])
+            #self.image = self.originalImage.scaled(self.scale[0], self.scale[1])
 
     def readFromDict(self, settings):
         """ Read the settings from a Python dict. """
@@ -231,6 +235,9 @@ class Microscope(QWidget):
         self.fps = settings.value('fps', 5, type=int)
         self.xDivs = settings.value('xDivs', 5, type=int)
         self.yDivs = settings.value('yDivs', 5, type=int)
+        self.scale = [ 0, 0 ]
+        self.scale[0] = settings.value('xScale', 0, type=int)
+        self.scale[1] = settings.value('yScale', 0, type=int)
         self.color = settings.value('color', False, type=bool)
 
     def writeSettings(self, settings):
@@ -240,3 +247,5 @@ class Microscope(QWidget):
         settings.setValue('xDivs', self.xDivs)
         settings.setValue('yDivs', self.yDivs)
         settings.setValue('color', self.color)
+        settings.setValue('xScale', self.scale[0])
+        settings.setValue('yScale', self.scale[1])

@@ -31,10 +31,14 @@ class Settings(QDialog):
         self.cameraRows.setMinimum(1)
         self.cameraRows.setMaximum(6)
         self.cameraRows.setValue(1)
-        self.scale = QSpinBox()
-        self.scale.setRange(0, 5000)
-        self.scale.setSingleStep(10)
-        self.scale.setValue(0)
+        self.xScale = QSpinBox()
+        self.xScale.setRange(0, 5000)
+        self.xScale.setSingleStep(10)
+        self.xScale.setValue(0)
+        self.yScale = QSpinBox()
+        self.yScale.setRange(0, 5000)
+        self.yScale.setSingleStep(10)
+        self.yScale.setValue(0)
         self.fps = QSpinBox()
         self.fps.setRange(1, 30)
         self.fps.setValue(5)
@@ -61,7 +65,10 @@ class Settings(QDialog):
         rowsCols.addWidget(self.cameraRows)
         formLayout.addRow('Cameras:', rowsCols)
         formLayout.addRow('Camera URL:', self.url)
-        formLayout.addRow('Image Scale:', self.scale)
+        imageRow = QHBoxLayout()
+        imageRow.addWidget(self.xScale)
+        imageRow.addWidget(self.yScale)
+        formLayout.addRow('Image Size (px):', imageRow)
         formLayout.addRow('Frame Rate:', self.fps)
         formLayout.addRow('X Divisions:', self.xDivs)
         formLayout.addRow('Y Divisions:', self.yDivs)
@@ -144,7 +151,8 @@ class Settings(QDialog):
         self.microscope.xDivs = self.xDivs.value()
         self.microscope.yDivs = self.yDivs.value()
         self.microscope.color = self.color.isChecked()
-        self.microscope.scale = [ self.scale.value(), 0 ]
+        self.microscope.scale = [ self.xScale.value(), self.yScale.value() ]
+        self.microscope.resizeImage()
         self.microscope.update()
 
     def updateForm(self):
@@ -153,7 +161,11 @@ class Settings(QDialog):
         self.xDivs.setValue(self.microscope.xDivs)
         self.yDivs.setValue(self.microscope.yDivs)
         self.color.setChecked(self.microscope.color)
-        if len(self.microscope.scale) > 0:
-            self.scale.setValue(self.microscope.scale[0])
+        if len(self.microscope.scale) == 2:
+            self.xScale.setValue(self.microscope.scale[0])
+            self.yScale.setValue(self.microscope.scale[1])
+        else:
+            self.xScale.setValue(0)
+            self.yScale.setValue(0)
 
 
